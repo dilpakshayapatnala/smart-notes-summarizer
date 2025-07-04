@@ -2,17 +2,16 @@ import streamlit as st
 import pdfplumber
 from PIL import Image
 import pytesseract
-import openai
+from openai import OpenAI
 import io
 
-# === SET YOUR API KEY HERE ===
-openai.api_key = "YOUR_OPENAI_API_KEY"
+# === SET YOUR OPENAI API KEY HERE ===
+client = OpenAI(api_key="YOUR_OPENAI_API_KEY")  # Replace with your actual API key
 
 st.set_page_config(page_title="Smart Notes Summarizer", layout="centered")
 st.title("📚 Smart Notes to Bullet Points")
-st.write("Upload **text**, **PDF**, or **image** files to generate bullet-point summaries.")
+st.write("Upload **text**, **PDF**, or **image** files to generate bullet-point summaries using AI.")
 
-# === File Upload ===
 uploaded_file = st.file_uploader("Upload a file", type=["txt", "pdf", "png", "jpg", "jpeg"])
 
 text_content = ""
@@ -35,20 +34,21 @@ if uploaded_file:
     st.subheader("📄 Extracted Text:")
     st.text_area("Text", text_content, height=300)
 
-    if text_content:
-        if st.button("🔍 Generate Summary"):
-            with st.spinner("Summarizing..."):
-                prompt = f"Summarize the following content into concise bullet points:\n\n{text_content}"
+    if text_content and st.button("🔍 Generate Summary"):
+        with st.spinner("Summarizing..."):
+            prompt = f"Summarize the following content into concise bullet points:\n\n{text_content}"
 
-                response = openai.ChatCompletion.create(
-                    model="gpt-4o",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.7,
-                    max_tokens=500
-                )
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=500
+            )
 
-                summary = response['choices'][0]['message']['content']
+            summary = response.choices[0].message.content
 
-                st.subheader("✅ Bullet Point Summary")
-                st.markdown(summary)
+            st.subheader("✅ Bullet Point Summary")
+            st.markdown(summary)
 
